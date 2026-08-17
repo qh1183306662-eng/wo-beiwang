@@ -220,7 +220,11 @@ form.addEventListener("submit", event => {
   saveItems(); dialog.close(); render();
 });
 dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
+    .then(registration => registration.update())
+    .catch(() => { /* offline: keep using the installed version */ });
+}
 render();
 
 const themeMenu = document.querySelector("#themeMenu");
