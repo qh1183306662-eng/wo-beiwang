@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#faf9f5" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="我备忘" />
+    <title>赴美采购清单</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="hero">
+        <p class="eyebrow">pack for a new life.</p>
+        <div class="theme-switcher">
+          <button id="themeMenuButton" class="theme-menu-button" aria-expanded="false">
+            <span id="activeThemeName">美国留学</span><span aria-hidden="true">⌄</span>
+          </button>
+          <button id="addThemeButton" class="theme-add-button" aria-label="新建主题">＋ 主题</button>
+          <div id="themeMenu" class="theme-menu" hidden></div>
+        </div>
+        <div class="title-row">
+          <div>
+            <h1>赴美采购清单</h1>
+            <p id="dateLabel" class="date-label"></p>
+          </div>
+          <button id="addButtonTop" class="icon-button" aria-label="添加物品">＋</button>
+        </div>
+        <div class="hero-doodle" aria-hidden="true">
+          <svg viewBox="0 0 320 120" role="img">
+            <path d="M25 86c38-18 77-16 115 2m-76-4V49c0-8 6-14 14-14h39c8 0 14 6 14 14v38M80 34v-8c0-6 4-10 10-10h15c6 0 10 4 10 10v8M75 57h46M89 35v52m18-52v52" />
+            <circle cx="78" cy="91" r="5"/><circle cx="118" cy="91" r="5"/>
+            <path d="M181 71c30-6 55-18 79-42l10 4-13 25 34 13-5 8-39-5-20 20-8-2 9-25-39 10z"/>
+            <path class="dashed" d="M144 86c17 8 30 7 43-2" />
+          </svg>
+          <span>一点一点，准备出发</span>
+        </div>
+        <div class="progress-card">
+          <div class="progress-copy">
+            <span id="progressText">准备中</span>
+            <strong id="progressPercent">0%</strong>
+          </div>
+          <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+          <p id="progressDetail" class="progress-detail">还没有物品</p>
+        </div>
+      </header>
+
+      <section class="controls" aria-label="清单工具">
+        <label class="search-box">
+          <span>⌕</span>
+          <input id="searchInput" type="search" placeholder="搜索物品" autocomplete="off" />
+        </label>
+        <button id="hideBoughtButton" class="filter-button" aria-pressed="false">隐藏已购</button>
+      </section>
+
+      <nav id="categoryTabs" class="category-tabs" aria-label="分类筛选"></nav>
+      <section id="shoppingList" class="shopping-list" aria-live="polite"></section>
+
+      <div id="emptyState" class="empty-state" hidden>
+        <div class="empty-icon">✓</div>
+        <h2>这里已经收拾妥当</h2>
+        <p>换个分类看看，或者添加一件新物品。</p>
+      </div>
+    </main>
+
+    <button id="floatingAddButton" class="floating-add">＋ <span>添加物品</span></button>
+
+    <dialog id="itemDialog">
+      <form id="itemForm" method="dialog">
+        <div class="dialog-handle"></div>
+        <div class="dialog-header">
+          <div>
+            <p class="eyebrow">one more thing.</p>
+            <h2 id="dialogTitle">添加物品</h2>
+          </div>
+          <button id="closeDialog" type="button" class="close-button" aria-label="关闭">×</button>
+        </div>
+        <input id="editingId" type="hidden" />
+        <label>物品名称<input id="itemName" required maxlength="40" placeholder="例如：转换插头" /></label>
+        <div class="form-row">
+          <label>数量<input id="itemQuantity" type="number" min="1" max="999" value="1" inputmode="numeric" required /></label>
+          <label>分类<select id="itemCategory"></select></label>
+        </div>
+        <label>备注（可选）<input id="itemNote" maxlength="60" placeholder="型号、尺寸或购买渠道" /></label>
+        <button class="primary-button" type="submit">保存到清单</button>
+      </form>
+    </dialog>
+
+    <dialog id="themeDialog" class="small-dialog">
+      <form id="themeForm" method="dialog">
+        <div class="dialog-handle"></div>
+        <div class="dialog-header">
+          <div><p class="eyebrow">a fresh page.</p><h2 id="themeDialogTitle">新建主题</h2></div>
+          <button id="closeThemeDialog" type="button" class="close-button" aria-label="关闭">×</button>
+        </div>
+        <input id="editingThemeId" type="hidden" />
+        <label>主题名称<input id="themeNameInput" required maxlength="20" placeholder="例如：第一次租房" /></label>
+        <button class="primary-button" type="submit">保存主题</button>
+      </form>
+    </dialog>
+
+    <script src="app.js"></script>
+  </body>
+</html>
