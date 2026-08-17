@@ -101,10 +101,89 @@ function openDialog(item) {
   setTimeout(() => document.querySelector("#itemName").focus(), 80);
 }
 
+const importDialog = document.querySelector("#importDialog");
+const importForm = document.querySelector("#importForm");
+const importText = document.querySelector("#importText");
+let pendingImportItems = [];
+
+const categoryKeywords = {
+  "证件": ["护照", "签证", "身份证", "驾照", "材料", "证件", "录取信", "i-20", "照片"],
+  "电子": ["电脑", "手机", "平板", "充电", "插头", "转换", "耳机", "相机", "电池", "数据线", "硬盘"],
+  "衣物": ["衣", "裤", "鞋", "袜", "帽", "外套", "内衣", "正装", "围巾"],
+  "药品": ["药", "创可贴", "口罩", "体温计", "绷带", "维生素"],
+  "学习": ["书", "笔", "文具", "本子", "计算器", "文件夹"],
+  "日用": ["牙", "毛巾", "眼镜", "洗", "雨伞", "水杯", "床", "枕", "收纳", "行李箱"],
+};
+
+function guessCategory(name) {
+  const text = name.toLowerCase();
+  return Object.entries(categoryKeywords).find(([, words]) => words.some(word => text.includes(word)))?.[0] || "其他";
+}
+
+function parseImportText(rawText) {
+  const result = [];
+  let sectionCategory = "";
+  rawText.split(/\r?\n/).forEach(rawLine => {
+    let line = rawLine.trim();
+    if (!line) return;
+    const sectionName = line.replace(/[：:]$/, "").trim();
+    if (categories.includes(sectionName) && /[：:]$/.test(line)) { sectionCategory = sectionName; return; }
+    const bought = /^(?:☑|✅|✔|✓|\s*[-*•]?\s*\[[xX]\])/.test(line);
+    line = line
+      .replace(/^(?:☐|☑|□|✅|✔|✓|\s*[-*•]?\s*\[[ xX]\])\s*/, "")
+      .replace(/^\s*(?:[-*•·]|\d+[.、)）])\s*/, "")
+      .trim();
+    let quantity = 1;
+    const quantityMatch = line.match(/(?:[×xX*]\s*(\d+)|(\d+)\s*(?:个|件|套|盒|包|瓶|本|双|份|支|台|条|张))\s*$/);
+    if (quantityMatch) {
+      quantity = Number(quantityMatch[1] || quantityMatch[2]) || 1;
+      line = line.slice(0, quantityMatch.index).trim();
+    }
+    if (!line) return;
+    result.push({
+      id: crypto.randomUUID?.() || `${Date.now()}-${result.length}`,
+      name: line.slice(0, 40), quantity, category: sectionCategory || guessCategory(line), note: "", bought,
+    });
+  });
+  return result;
+}
+
+function renderImportPreview() {
+  pendingImportItems = parseImportText(importText.value);
+  const preview = document.querySelector("#importPreview");
+  document.querySelector("#confirmImportButton").disabled = pendingImportItems.length === 0;
+  if (!pendingImportItems.length) {
+    preview.textContent = importText.value.trim() ? "没有识别到可导入的物品，请尝试每行写一件。" : "粘贴内容后，这里会显示识别结果。";
+    return;
+  }
+  preview.innerHTML = `<strong>识别到 ${pendingImportItems.length} 件物品</strong><div class="import-preview-list">${pendingImportItems.map(item => `
+    <div class="import-preview-item"><span>${item.bought ? "✓ " : ""}${escapeHtml(item.name)}</span><span class="import-preview-meta">${escapeHtml(item.category)} · ×${item.quantity}</span></div>`).join("")}</div>`;
+}
+
+function openImportDialog() {
+  importForm.reset();
+  pendingImportItems = [];
+  renderImportPreview();
+  importDialog.showModal();
+  setTimeout(() => importText.focus(), 80);
+}
+
 document.querySelector("#itemCategory").innerHTML = categories.map(category => `<option>${category}</option>`).join("");
 document.querySelector("#dateLabel").textContent = new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric", weekday: "long" }).format(new Date());
 document.querySelectorAll("#addButtonTop, #floatingAddButton").forEach(button => button.addEventListener("click", () => activeTheme() ? openDialog() : openThemeDialog()));
 document.querySelector("#closeDialog").addEventListener("click", () => dialog.close());
+document.querySelector("#smartImportButton").addEventListener("click", openImportDialog);
+document.querySelector("#closeImportDialog").addEventListener("click", () => importDialog.close());
+importText.addEventListener("input", renderImportPreview);
+importForm.addEventListener("submit", event => {
+  event.preventDefault();
+  if (!pendingImportItems.length || !activeTheme()) return;
+  items = [...pendingImportItems, ...items];
+  saveItems();
+  importDialog.close();
+  render();
+});
+importDialog.addEventListener("click", event => { if (event.target === importDialog) importDialog.close(); });
 document.querySelector("#searchInput").addEventListener("input", render);
 document.querySelector("#hideBoughtButton").addEventListener("click", event => {
   hideBought = !hideBought;

@@ -54,6 +54,7 @@
           <span>⌕</span>
           <input id="searchInput" type="search" placeholder="搜索物品" autocomplete="off" />
         </label>
+        <button id="smartImportButton" class="filter-button">智能导入</button>
         <button id="hideBoughtButton" class="filter-button" aria-pressed="false">隐藏已购</button>
       </section>
 
@@ -87,6 +88,21 @@
         </div>
         <label>备注（可选）<input id="itemNote" maxlength="60" placeholder="型号、尺寸或购买渠道" /></label>
         <button class="primary-button" type="submit">保存到清单</button>
+      </form>
+    </dialog>
+
+    <dialog id="importDialog">
+      <form id="importForm" method="dialog">
+        <div class="dialog-handle"></div>
+        <div class="dialog-header">
+          <div><p class="eyebrow">paste & organize.</p><h2>智能导入</h2></div>
+          <button id="closeImportDialog" type="button" class="close-button" aria-label="关闭">×</button>
+        </div>
+        <label>粘贴备忘录内容
+          <textarea id="importText" rows="8" placeholder="例如：&#10;□ 转换插头 2个&#10;☑ 护照&#10;- 感冒药 1盒"></textarea>
+        </label>
+        <div id="importPreview" class="import-preview" aria-live="polite">粘贴内容后，这里会显示识别结果。</div>
+        <button id="confirmImportButton" class="primary-button" type="submit" disabled>导入到当前主题</button>
       </form>
     </dialog>
 

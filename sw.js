@@ -1,4 +1,4 @@
-const CACHE = "wo-beiwang-github-v2";
+const CACHE = "wo-beiwang-github-v3";
 const ASSETS = [
   "./index.html",
   "./styles.css",
