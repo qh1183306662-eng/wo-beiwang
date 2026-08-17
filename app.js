@@ -1,24 +1,9 @@
 const categories = ["证件", "电子", "衣物", "日用", "药品", "学习", "其他"];
-const starterItems = [
-  ["护照与签证材料", 1, "证件", "随身携带并准备复印件"],
-  ["I-20 原件", 1, "证件", "入境时随身携带"],
-  ["录取信与体检材料", 1, "证件", "纸质及电子备份"],
-  ["美标转换插头", 2, "电子", "美国电压 120V"],
-  ["充电宝", 1, "电子", "需要放在随身行李"],
-  ["电脑与充电器", 1, "电子", "检查电源适配范围"],
-  ["正装", 1, "衣物", "面试或正式活动"],
-  ["舒适运动鞋", 1, "衣物", "校园步行较多"],
-  ["眼镜或隐形眼镜", 2, "日用", "可多配一副备用"],
-  ["常用药小药箱", 1, "药品", "保留原包装和说明书"],
-  ["文具套装", 1, "学习", "带少量即可"],
-];
-
-const storageKey = "usa-study-shopping-list-v1";
 const themesStorageKey = "shopping-list-themes-v1";
 let themes = loadThemes();
-let activeThemeId = localStorage.getItem("active-shopping-theme") || themes[0].id;
-if (!themes.some(theme => theme.id === activeThemeId)) activeThemeId = themes[0].id;
-let items = activeTheme().items;
+let activeThemeId = localStorage.getItem("active-shopping-theme") || themes[0]?.id || "";
+if (!themes.some(theme => theme.id === activeThemeId)) activeThemeId = themes[0]?.id || "";
+let items = activeTheme()?.items || [];
 let activeCategory = "全部";
 let hideBought = false;
 
@@ -27,32 +12,24 @@ const tabs = document.querySelector("#categoryTabs");
 const dialog = document.querySelector("#itemDialog");
 const form = document.querySelector("#itemForm");
 
-function loadItems() {
-  const saved = localStorage.getItem(storageKey);
-  if (saved) {
-    try { return JSON.parse(saved); } catch (_) { /* use defaults */ }
-  }
-  return starterItems.map(([name, quantity, category, note], index) => ({
-    id: `${Date.now()}-${index}`, name, quantity, category, note, bought: false,
-  }));
-}
-
 function loadThemes() {
   const saved = localStorage.getItem(themesStorageKey);
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length) return parsed;
-    } catch (_) { /* migrate the original list */ }
+      if (Array.isArray(parsed)) return parsed;
+    } catch (_) { /* start with a blank page */ }
   }
-  return [{ id: "usa-study", name: "美国留学", items: loadItems() }];
+  return [];
 }
 
-function activeTheme() { return themes.find(theme => theme.id === activeThemeId) || themes[0]; }
+function activeTheme() { return themes.find(theme => theme.id === activeThemeId) || themes[0] || null; }
 function saveItems() {
-  activeTheme().items = items;
+  const theme = activeTheme();
+  if (theme) theme.items = items;
   localStorage.setItem(themesStorageKey, JSON.stringify(themes));
-  localStorage.setItem("active-shopping-theme", activeThemeId);
+  if (activeThemeId) localStorage.setItem("active-shopping-theme", activeThemeId);
+  else localStorage.removeItem("active-shopping-theme");
 }
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
@@ -66,13 +43,13 @@ function renderTabs() {
 
 function renderThemes() {
   const theme = activeTheme();
-  document.querySelector("#activeThemeName").textContent = theme.name;
-  document.querySelector("h1").textContent = theme.name.endsWith("清单") ? theme.name : `${theme.name}清单`;
+  document.querySelector("#activeThemeName").textContent = theme?.name || "添加主题";
+  document.querySelector("h1").textContent = theme ? (theme.name.endsWith("清单") ? theme.name : `${theme.name}清单`) : "还没有主题";
   document.querySelector("#themeMenu").innerHTML = themes.map(candidate => `
     <div class="theme-option" data-theme-id="${candidate.id}">
       <button class="theme-option-name ${candidate.id === activeThemeId ? "active" : ""}" data-theme-action="switch">${escapeHtml(candidate.name)}</button>
       <button class="theme-icon-action" data-theme-action="rename">改名</button>
-      ${themes.length > 1 ? '<button class="theme-icon-action delete" data-theme-action="delete">删除</button>' : ""}
+      <button class="theme-icon-action delete" data-theme-action="delete">删除</button>
     </div>`).join("");
 }
 
@@ -88,6 +65,10 @@ function visibleItems() {
 function render() {
   renderThemes();
   renderTabs();
+  const hasTheme = Boolean(activeTheme());
+  ["#addButtonTop", "#floatingAddButton", ".progress-card", ".controls", "#categoryTabs"].forEach(selector => {
+    document.querySelector(selector).hidden = !hasTheme;
+  });
   const visible = visibleItems();
   list.innerHTML = visible.map(item => `
     <article class="item ${item.bought ? "bought" : ""}" data-id="${item.id}">
@@ -96,7 +77,10 @@ function render() {
       <span class="quantity">× ${item.quantity}</span>
       <div class="item-actions"><button class="text-action" data-action="edit">编辑</button><button class="text-action delete" data-action="delete">删除</button></div>
     </article>`).join("");
-  document.querySelector("#emptyState").hidden = visible.length > 0;
+  const emptyState = document.querySelector("#emptyState");
+  emptyState.hidden = hasTheme && visible.length > 0;
+  emptyState.querySelector("h2").textContent = hasTheme ? "这里已经收拾妥当" : "从一个主题开始";
+  emptyState.querySelector("p").textContent = hasTheme ? "换个分类看看，或者添加一件新物品。" : "点击上方“＋ 主题”，建立你的第一张清单。";
   const bought = items.filter(item => item.bought).length;
   const percent = items.length ? Math.round(bought / items.length * 100) : 0;
   document.querySelector("#progressPercent").textContent = `${percent}%`;
@@ -119,7 +103,7 @@ function openDialog(item) {
 
 document.querySelector("#itemCategory").innerHTML = categories.map(category => `<option>${category}</option>`).join("");
 document.querySelector("#dateLabel").textContent = new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric", weekday: "long" }).format(new Date());
-document.querySelectorAll("#addButtonTop, #floatingAddButton").forEach(button => button.addEventListener("click", () => openDialog()));
+document.querySelectorAll("#addButtonTop, #floatingAddButton").forEach(button => button.addEventListener("click", () => activeTheme() ? openDialog() : openThemeDialog()));
 document.querySelector("#closeDialog").addEventListener("click", () => dialog.close());
 document.querySelector("#searchInput").addEventListener("input", render);
 document.querySelector("#hideBoughtButton").addEventListener("click", event => {
@@ -198,8 +182,8 @@ themeMenu.addEventListener("click", event => {
   if (action === "delete") {
     if (!confirm(`删除主题“${theme.name}”及其中的所有物品？`)) return;
     themes = themes.filter(candidate => candidate.id !== theme.id);
-    if (activeThemeId === theme.id) activeThemeId = themes[0].id;
-    items = activeTheme().items;
+    if (activeThemeId === theme.id) activeThemeId = themes[0]?.id || "";
+    items = activeTheme()?.items || [];
     saveItems(); render();
   }
 });
