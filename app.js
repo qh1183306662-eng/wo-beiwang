@@ -66,7 +66,7 @@ function render() {
   renderThemes();
   renderTabs();
   const hasTheme = Boolean(activeTheme());
-  ["#addButtonTop", "#floatingAddButton", ".progress-card", ".controls", "#categoryTabs"].forEach(selector => {
+  ["#smartImportButton", "#addButtonTop", "#floatingAddButton", ".progress-card", ".controls", "#categoryTabs"].forEach(selector => {
     document.querySelector(selector).hidden = !hasTheme;
   });
   const visible = visibleItems();
